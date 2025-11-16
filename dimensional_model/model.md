@@ -1,0 +1,389 @@
+# ACT Commodities BI Assessment - Dimensional Model Specification
+
+
+---
+
+## 📋 **MODEL OVERVIEW**
+
+**Purpose:** Track daily trading performance with P&L attribution across traders  
+**Architecture:** Star schema with SCD Type 2 dimensions  
+**Grain:** One row per SnapshotDate + Trade + Trader  
+**Author:** Naveen Gandhi Raj Mohan  
+**Date:** November 16, 2025
+
+---
+
+## ⚠️ **IMPORTANT NOTE: Composite Business Keys**
+
+**Trader, Product & Account Keys:**  
+The source data does not provide stable technical IDs for trader, product, or account, and the same label can appear in multiple contexts (e.g., the same Trader label in different departments, or the same Account under different parents).
+
+For this reason, I use composite business keys:
+- **DimTrader:** (Trader, Department)
+- **DimProduct:** (ProductNumber, UnitOfMeasure)  
+- **DimAccount:** (AccountName, AccountParent)
+
+In ETL, Stage_Trades joins to these dimensions on the composite keys plus the snapshot date (for SCD2 dimensions). In a production implementation, I would replace these composite keys with proper source-system IDs.
+
+---
+
+## 🎯 **BUSINESS REQUIREMENTS**
+
+### **Key Business Questions:**
+1. What is the daily P&L for each trader?
+2. What is the historical trend of trader performance?
+3. Which products/commodities generate the most profit?
+4. How do trades move through different statuses over time?
+
+### **Design Rationale:**
+- **Periodic Snapshot Fact:** Captures daily state of trades for point-in-time analysis
+- **SCD Type 2 Dimensions:** Tracks historical changes to trader roles and trade statuses
+- **Surrogate Keys:** Enables efficient joins and SCD Type 2 implementation
+
+---
+
+## 📊 **FACT TABLE**
+
+### **FactTradeDaily**
+
+**THOUGHT PROCESS:**
+- When I looked at the trading data, I realized that sometimes multiple traders work together on the same trade, so I needed a way to track each trader's contribution separately
+- That's why I chose the grain: one row per snapshot date, per trade, per trader - this lets us split P&L attribution properly
+- The PnlSplitPercentage field tells us what portion of the trade belongs to each trader (like 60/40 if two traders split a trade)
+- I went with a periodic snapshot approach because we need to see how things looked at the end of each day - the mark-to-market price, current P&L, etc. It's like taking a photo of all our trades at close of business
+- All the foreign keys point to surrogate keys in the dimensions, which lets us handle historical tracking properly when trade statuses change or traders get promoted
+
+
+
+| Key | Field | Type |
+|-----|-------|------|
+| PK | FactTradeDailyKey | INT |
+| FK | SnapshotDateKey | INT |
+| FK | TradeKey | INT |
+| FK | TraderKey | INT |
+| FK | ProductKey | INT |
+| FK | AccountKey | INT |
+| FK | CurrencyKey | INT |
+| | PnlSplitPercentage | INT |
+| | Volume | DECIMAL(18,4) |
+| | Price | DECIMAL(18,4) |
+| | MtMPrice | DECIMAL(18,4) |
+| | COGS | DECIMAL(18,2) |
+| | Revenue | DECIMAL(18,2) |
+| | PnL | DECIMAL(18,2) |
+
+
+---
+
+## 📅 **DIMENSION 1: DimDate**
+
+**THOUGHT PROCESS:**
+- Every data warehouse needs a solid date dimension - it's the backbone of all time-based analysis
+- I went with an integer DateKey in YYYYMMDD format (like 20241005) because it's faster for joins than using actual dates, plus it sorts naturally
+- I included all the standard calendar attributes - year, quarter, month names, week numbers, day of week - so users can easily drill down from yearly trends to daily details
+- If ACT Commodities has a fiscal year different from the calendar year, we can add those columns later
+- The main relationship here is with FactTradeDaily through SnapshotDateKey, which gives us the time-series view of trading performance
+
+**PURPOSE:** Calendar dimension for time-based analysis  
+**TYPE:** Standard dimension (non-SCD)
+
+| Key | Field | Type |
+|-----|-------|------|
+| PK | DateKey | INT |
+| | FullDate | DATE |
+| | Day | INT |
+| | Month | INT |
+| | MonthName | VARCHAR(20) |
+| | MonthShortName | CHAR(3) |
+| | Year | INT |
+| | Quarter | INT |
+| | YearMonth | CHAR(6) |
+| | WeekOfYear | INT |
+| | DayOfWeek | INT |
+| | DayOfWeekName | VARCHAR(10) |
+| | IsWeekend | BIT |
+
+
+---
+
+## 📈 **DIMENSION 2: DimTrade (SCD Type 2)**
+
+**THOUGHT PROCESS:**
+- Trades have a lifecycle - they start as Open, get Matched, and eventually Close. We need to track these status changes over time, so I implemented SCD Type 2 here
+- The TradeKey is a surrogate key that increments with each version, while TradelineNumber stays constant as the business key
+- This means if trade T001 changes status from Open to Matched, we create a new row with a new TradeKey but keep the same TradelineNumber
+- I decided to keep DealDate and ClosedDate as simple DATE fields rather than foreign keys to DimDate - this avoids the role-playing dimension complexity in Power BI and makes building reports much easier
+- ClosedDate can be NULL for trades that are still open, which makes sense
+
+**PURPOSE:** Trade master data with historical tracking  
+**TYPE:** SCD Type 2 dimension  
+**BUSINESS KEY:** TradelineNumber
+
+| Key | Field | Type |
+|-----|-------|------|
+| PK | TradeKey | INT |
+| | TradelineNumber | VARCHAR(50) |
+| | CompanyCode | VARCHAR(20) |
+| | Type | VARCHAR(50) |
+| | RecordSource | VARCHAR(50) |
+| | TradeType | VARCHAR(50) |
+| | TradelineStatus | VARCHAR(20) |
+| | Direction | VARCHAR(10) |
+| | MatchIndicator | VARCHAR(10) |
+| | DealDate | DATE |
+| | ClosedDate | DATE |
+| | ValidFromDate | DATE |
+| | ValidToDate | DATE |
+| | IsCurrent | BIT |
+
+---
+
+## 👤 **DIMENSION 3: DimTrader (SCD Type 2)**
+
+**THOUGHT PROCESS:**
+- Traders don't stay in the same role forever - they get promoted, move departments, change positions
+- We need to track this history because when we analyze past performance, we want to know what role the trader had at that time
+- I discovered that using just Trader alone as the business key could cause issues - the same trader name might appear in different departments, creating many-to-many join problems
+- So I'm using a composite business key: Trader + Department together uniquely identify a trader in a specific context
+- SCD Type 2 creates new rows with new TraderKeys each time something changes (like a promotion or department transfer)
+- This way, if 'John Smith' moves from Trading Desk to Risk Management, we get separate dimension records for each role
+**PURPOSE:** Trader master data with historical role/department tracking  
+**TYPE:** SCD Type 2 dimension  
+**BUSINESS KEY:** Trader + Department (composite)
+
+| Key | Field | Type |
+|-----|-------|------|
+| PK | TraderKey | INT |
+| | Trader | VARCHAR(100) |
+| | JobPosition | VARCHAR(100) |
+| | Department | VARCHAR(100) |
+| | ValidFromDate | DATE |
+| | ValidToDate | DATE |
+| | IsCurrent | BIT |
+
+
+---
+
+## 🏷️ **DIMENSION 4: DimProduct**
+
+**THOUGHT PROCESS:**
+- Commodities naturally organize into hierarchies - you might want to see all Energy products, then drill into Oil specifically, then Crude oil, and finally specific grades like Brent Crude
+- That's why I built a 4-level hierarchy (L1 through L4) - it lets traders and analysts look at performance at any level they want
+- I discovered that ProductNumber alone isn't unique - the same product code might appear with different units of measure (like MT vs BBL)
+- So I'm using a composite business key: ProductNumber + UnitOfMeasure together uniquely identify a product
+- The UnitOfMeasure field is crucial - you need to know if Volume is in metric tons (MT), barrels (BBL), or megawatt hours (MWh) to make sense of the numbers
+- SCD Type 2 for this is optional because product attributes might change occasionally (like reclassification in the hierarchy), but it's not as critical as tracking trader or trade changes
+  
+**PURPOSE:** Product/commodity hierarchy and attributes  
+**TYPE:** Standard dimension with optional SCD Type 2  
+**BUSINESS KEY:** ProductNumber + UnitOfMeasure (composite)
+
+| Key | Field | Type |
+|-----|-------|------|
+| PK | ProductKey | INT |
+| | ProductNumber | VARCHAR(50) |
+| | L1_ProductGroup | VARCHAR(100) |
+| | L2_Subgroup | VARCHAR(100) |
+| | L3_Category | VARCHAR(100) |
+| | L4_SubCategory | VARCHAR(100) |
+| | UnitOfMeasure | VARCHAR(20) |
+| | ValidFromDate | DATE |
+| | ValidToDate | DATE |
+| | IsCurrent | BIT |
+
+**PRODUCT HIERARCHY:**
+```
+L1_ProductGroup (Energy, Metals, Agriculture)
+  └─ L2_Subgroup (Oil, Gas, Power)
+      └─ L3_Category (Crude, Refined Products)
+          └─ L4_SubCategory (Brent, WTI, Dubai)
+```
+
+---
+
+## 🏢 **DIMENSION 5: DimAccount**
+
+**THOUGHT PROCESS:**
+- Accounts represent who we're trading with - counterparties, customers, other entities
+- The InterCompanyFlag is important because internal trades (between ACT entities) need to be handled differently from external trades for reporting and consolidation
+- I realized that AccountName alone might not be unique - the same account name could exist under different parent accounts in the hierarchy
+- So I'm using a composite business key: AccountName + AccountParent together uniquely identify an account
+- AccountParent enables account hierarchy for consolidation reports, and AccountCountry provides geographic analysis of trading partners
+- SCD Type 2 is optional here since account relationships might change, but it's probably less frequent than trader or trade changes
+
+
+**PURPOSE:** Account/counterparty master data  
+**TYPE:** Standard dimension with optional SCD Type 2  
+**BUSINESS KEY:** AccountName + AccountParent (composite)
+
+| Key | Field | Type |
+|-----|-------|------|
+| PK | AccountKey | INT |
+| | AccountName | VARCHAR(100) |
+| | InterCompanyFlag | BIT |
+| | AccountParent | VARCHAR(100) |
+| | AccountCountry | VARCHAR(50) |
+| | ValidFromDate | DATE |
+| | ValidToDate | DATE |
+| | IsCurrent | BIT |
+
+
+---
+
+## 💱 **DIMENSION 6: DimCurrency**
+
+**THOUGHT PROCESS:**
+- This is the simplest dimension in the model - just a lookup table for currency codes
+- I'm using the ISO 4217 standard (EUR, USD, GBP, JPY, etc.) because it's universally recognized
+- No SCD Type 2 needed here because currency codes don't change - EUR is always EUR
+- If we needed more details like currency names, symbols, or even exchange rates, we could add them later, but for now keeping it simple
+- This dimension tells us what currency each trade's financial measures (P&L, Revenue, COGS) are denominated in
+
+**PURPOSE:** Currency reference data  
+**TYPE:** Standard dimension (non-SCD)  
+**STANDARD:** ISO 4217
+
+| Key | Field | Type |
+|-----|-------|------|
+| PK | CurrencyKey | INT |
+| | CurrencyCode | CHAR(3) |
+
+
+---
+
+## 🔗 **RELATIONSHIPS**
+
+### **Star Schema Relationships (6 Total):**
+
+#### **From FactTradeDaily:**
+1. `FactTradeDaily.SnapshotDateKey` → `DimDate.DateKey` (Many-to-One)
+2. `FactTradeDaily.TradeKey` → `DimTrade.TradeKey` (Many-to-One)
+3. `FactTradeDaily.TraderKey` → `DimTrader.TraderKey` (Many-to-One)
+4. `FactTradeDaily.ProductKey` → `DimProduct.ProductKey` (Many-to-One)
+5. `FactTradeDaily.AccountKey` → `DimAccount.AccountKey` (Many-to-One)
+6. `FactTradeDaily.CurrencyKey` → `DimCurrency.CurrencyKey` (Many-to-One)
+
+**IMPORTANT:** DimDate is used for the primary time dimension (SnapshotDate) in the fact table. DealDate and ClosedDate are stored as DATE attributes in DimTrade to simplify the model and avoid role-playing dimension complexity in Power BI visualizations.
+
+---
+
+## 📐 **SCD TYPE 2 LOGIC**
+
+### **Implementation Details:**
+
+**AFFECTED DIMENSIONS:**
+- DimTrade (REQUIRED)
+- DimTrader (REQUIRED)
+- DimProduct (OPTIONAL)
+- DimAccount (OPTIONAL)
+
+**SCD TYPE 2 FIELDS:**
+- `ValidFromDate`: Start of validity period (inclusive)
+- `ValidToDate`: End of validity period (exclusive), NULL = current version
+- `IsCurrent`: Boolean flag (1 = active version, 0 = historical version)
+
+**FACT-TO-DIMENSION LOOKUP LOGIC:**
+```sql
+-- When loading FactTradeDaily, join to dimension using:
+FROM Stage_Trades s
+JOIN DimDate d
+    ON d.FullDate = @SnapshotDate   -- snapshot / as-of date for the fact
+
+-- SCD2 lookup for Trade (BK = TradelineNumber)
+JOIN DimTrade t
+    ON t.TradelineNumber = s.TradelineNumber
+   AND t.ValidFromDate   <= d.FullDate
+   AND t.ValidToDate     >  d.FullDate
+
+-- SCD2 lookup for Trader (BK = Trader + Department)
+JOIN DimTrader tr
+    ON tr.Trader      = s.Trader
+   AND tr.Department  = s.Department
+   AND tr.ValidFromDate <= d.FullDate
+   AND tr.ValidToDate   >  d.FullDate
+
+-- Product (SCD2 optional, BK = ProductNumber + UnitOfMeasure)
+JOIN DimProduct p
+    ON p.ProductNumber   = s.ProductNumber2
+   AND p.UnitOfMeasure   = s.UnitOfMeasure
+   AND p.ValidFromDate  <= d.FullDate
+   AND p.ValidToDate    >  d.FullDate
+
+-- Account (SCD2 optional, BK = AccountName + AccountParent)
+JOIN DimAccount a
+    ON a.AccountName     = s.AccountName
+   AND a.AccountParent   = s.[Account Parent]
+   AND a.ValidFromDate  <= d.FullDate
+   AND a.ValidToDate    >  d.FullDate
+
+-- Currency (no SCD2)
+JOIN DimCurrency c
+    ON c.CurrencyCode = s.Currency;
+
+-- Or using IsCurrent for current state only:
+JOIN DimTrader t ON f.TraderKey = t.TraderKey
+  AND t.IsCurrent = 1
+```
+
+**CHANGE TRACKING PROCESS:**
+1. **Detect Change:** Source system indicates trader promoted or trade status changed
+2. **Expire Current:** Update current row: `ValidToDate = change_date`, `IsCurrent = 0`
+3. **Insert New:** Insert new row with updated attributes, `ValidFromDate = change_date`, `ValidToDate = NULL`, `IsCurrent = 1`
+4. **Preserve History:** Old row remains in table for historical reporting
+
+**EXAMPLE:**
+```
+Initial State (2023-01-01):
+TraderKey=1, Trader=John Smith, Department=Trading, JobPosition=Analyst, ValidFrom=2023-01-01, ValidTo=NULL, IsCurrent=1
+
+After Promotion (2024-07-01):
+TraderKey=1, Trader=John Smith, Department=Trading, JobPosition=Analyst, ValidFrom=2023-01-01, ValidTo=2024-07-01, IsCurrent=0
+TraderKey=2, Trader=John Smith, Department=Trading, JobPosition=Senior Trader, ValidFrom=2024-07-01, ValidTo=NULL, IsCurrent=1
+```
+
+---
+
+## 🎯 **BUSINESS RULES**
+
+### **Fact Table Grain:**
+- One row per SnapshotDate + Trade + Trader
+
+### **Measure Additivity:**
+- **Fully Additive:** Volume, COGS, Revenue, PnL (sum across all dimensions including time)
+- **Semi-Additive:** MtMPrice (additive across non-time dimensions, use AVG or last value for time)
+- **Non-Additive:** Price, PnlSplitPercentage (use weighted averages)
+
+### **Date Handling:**
+- DateKey format: YYYYMMDD as integer (20241005)
+- Enables efficient joins and sorting
+- Always use DateKey for relationships, not FullDate
+
+### **Surrogate Keys:**
+- All dimension PKs are surrogate integers (1, 2, 3...)
+- Natural/business keys preserved as attributes (TradelineNumber for trades, composite keys for others)
+- Composite business keys used to avoid ambiguity:
+  - DimTrader: Trader + Department
+  - DimProduct: ProductNumber + UnitOfMeasure
+  - DimAccount: AccountName + AccountParent
+- Fact table uses surrogate keys for all FK references
+
+---
+
+## ✅ **MODEL VALIDATION CHECKLIST**
+
+- [x] Fact grain clearly defined
+- [x] All measures documented
+- [x] All dimensions have surrogate PKs
+- [x] Business keys identified
+- [x] SCD Type 2 logic specified
+- [x] Relationships documented (6 total)
+- [x] Data types specified
+- [x] Hierarchies documented
+- [x] Business rules captured
+
+---
+
+**Model Version:** 1.0  
+**Last Updated:** November 16, 2025  
+**For:** ACT Commodities BI Assessment  
+**Author:** Naveen Gandhi Raj Mohan
