@@ -1,3 +1,28 @@
+
+You are a technical documentation specialist maintaining project documentation.
+
+**Task**: Update the existing readme.md to reflect recent repository changes.
+
+**CRITICAL**: Only update the sections affected by changes. Do NOT regenerate the entire document.
+
+---
+
+## Repository Changes Detected
+
+**Files Added (0):**
+  (none)
+
+**Files Modified (1):**
+  - completed_sql_queries.sql
+
+**Files Removed (0):**
+  (none)
+
+---
+
+## Current Documentation
+
+```markdown
 # ACT Commodities BI Assessment
 
 ACT Commodities BI take-home assessment focused on SQL, dimensional modeling, and Power BI reporting for commodities trading analytics.
@@ -8,50 +33,25 @@ This repository contains three core components for a Senior BI Engineer role ass
 - **Dimensional Modeling**: SCD Type 2 dimensions and periodic snapshot facts
 - **Power BI Visualization**: Performance overview dashboard
 
-
-## GenAI Documentation Automation
-
-This project includes an automated documentation system that keeps project documentation synchronized with code changes. Instead of manually updating README files every time you modify SQL queries or data models, the system detects changes and generates updates automatically.
-
-The workflow is simple: generate your initial documentation from templates, make code changes, and let the system detect what changed and update only the relevant sections. This saves time and ensures documentation never falls out of sync with your actual work.
-
-Technical details and usage instructions are in `.prompts/USER_GUIDE.md` for anyone interested in the implementation.
-
 ## File Organization
 ```
 .
 ├── README.md
-├── completed_sql_queries.sql
-├── dimensional_model/
-│   ├── model.md
-│   └── act_dimensional_model_erd.png
-├── power_bi/
-│   ├── Performance Overview.pbip
-│   └── performance_overview_documentation.md
-├── project_documents/
-│   ├── act_power_bi_theme.json
-│   ├── senior_bi_engineer_assessment_details.md
-│   ├── sql_assignment.sql
-│   └── trading_dataset.xlsx
-└── .prompts/
-    ├── USER_GUIDE.md
-    └── documentation_*.py
+└── project_documents/
+    ├── act_power_bi_theme.json
+    ├── senior_bi_engineer_assessment_details.md
+    ├── sql_assignment.sql
+    └── trading_dataset.xlsx
 ```
 
-- `README.md` - Project repository documentation
-- `completed_sql_queries.sql` - SQL solutions with detailed thought process (7 queries)
-- `dimensional_model/model.md` - Complete dimensional model specification
-- `dimensional_model/act_dimensional_model_erd.png` - Entity relationship diagram
-- `power_bi/Performance Overview.pbip` - Power BI project file (PBIP format)
-- `power_bi/performance_overview_documentation.md` - DAX measures and report documentation
+- `README.md` - Project Repository documentation
 - `project_documents/act_power_bi_theme.json` - Power BI theme (required for reporting assessment)
 - `project_documents/senior_bi_engineer_assessment_details.md` - Full requirements & assessment details
 - `project_documents/sql_assignment.sql` - SQL schema + assignment placeholders
 - `project_documents/trading_dataset.xlsx` - Trading dataset for dimensional modeling & Power BI
-- `.prompts/` - GenAI documentation automation system
 
 
-## SQL Development (`completed_sql_queries.sql`)
+## SQL Development (`project_documents/sql_assignment.sql`)
 
 ### Environment Setup
 - **Target platform**: MS SQL Server (T-SQL syntax)
@@ -87,7 +87,7 @@ The dataset represents **commodities trading operations** with three main entiti
 - Use explicit column lists in SELECT (avoid `SELECT *`)
 - Join pattern: `Trades → Deals → Traders` via MatchId and TraderCode
 
-## Dimensional Modeling Exercise (`dimensional_model/model.md`)
+## Dimensional Modeling Exercise
 
 ### Requirements
 - Design **SCD Type 2** dimensions
@@ -102,10 +102,6 @@ The dataset represents **commodities trading operations** with three main entiti
 - Expected dimensions: DimTrader (SCD2), DimProduct/Commodity (SCD2) and DimDate
 - Expected facts: FactTraderPerformance (periodic snapshots)
 
-### Deliverable
-- **Model Specification**: `dimensional_model/model.md` - Complete star schema with 6 dimensions, 1 fact table, composite business keys
-- **ERD Diagram**: `dimensional_model/act_dimensional_model_erd.png` - Visual representation of relationships
-
 ## Power BI Report (`Performance Overview`)
 
 ### Theme
@@ -114,15 +110,60 @@ The dataset represents **commodities trading operations** with three main entiti
 ### Data Source
 - Use "Trading Dataset.xlsx" (NOT the SQL assignment sample data)
 - May require data transformation in Power Query to align with dimensional model
-
-### Deliverable
-- **Report File**: `power_bi/Performance Overview.pbip` - Power BI project format
-- **Documentation**: `power_bi/performance_overview_documentation.md` - DAX measures, visuals, data model architecture
   
 
-## Deliverables Summary
-- **SQL**: `completed_sql_queries.sql` - 7 commented queries with thought process
-- **Modeling**: `dimensional_model/model.md` + ERD diagram with SCD2 dimensions and snapshot fact
-- **Power BI**: `power_bi/Performance Overview.pbip` with ACT theme applied
+## Deliverables
+- **SQL**: Commented queries added to `sql_assignment.sql` under each requirement
+- **Modeling**: Database diagram (image or .pdf) showing SCD2 dimensions and snapshot fact with PK, FK and relationships between tables captured.
+- **Power BI**: `.pbix` file named "Performance Overview" with given theme
 
+```
 
+---
+
+## Update Instructions
+
+1. **Analyze Changes**: Determine which sections of readme.md are affected
+   - New files → Update "File Organization" section
+   - Modified SQL → Update "SQL Development" section
+   - Modified Power BI → Update "Power BI Report" section
+   - Modified model.md → Update "Dimensional Modeling Exercise" section
+
+2. **Generate Differential Update**: Provide ONLY the sections that need updating
+   - Format: Section heading + updated content
+   - Preserve existing formatting style
+   - Maintain markdown structure
+
+3. **Provide Change Summary**: Explain what changed and why the update is needed
+
+---
+
+## Output Format
+
+```json
+{
+  "sections_to_update": [
+    {
+      "section_name": "File Organization",
+      "reason": "New files added: example.sql",
+      "updated_content": "...full section content with changes..."
+    },
+    {
+      "section_name": "SQL Development",
+      "reason": "Query 8 added to sql_assignment.sql",
+      "updated_content": "...full section content with changes..."
+    }
+  ],
+  "changelog_entry": "Added Query 8 for calculating trader commission rates",
+  "timestamp": "2025-11-17T15:29:06.431087"
+}
+```
+
+---
+
+**Remember**: 
+- Update ONLY affected sections
+- Preserve existing tone and formatting
+- No emoji or AI-style language
+- Keep inline code formatting with backticks
+- Maintain H2/H3 hierarchy

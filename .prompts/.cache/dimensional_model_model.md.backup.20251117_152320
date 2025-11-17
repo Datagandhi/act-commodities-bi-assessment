@@ -250,7 +250,22 @@ L1_ProductGroup (Energy, Metals, Agriculture)
 
 
 ---
+💱 DIMENSION 6: DimLocation
+THOUGHT PROCESS:
 
+This is the simplest dimension in the model - just a lookup table for currency codes
+I'm using the ISO 4217 standard (EUR, USD, GBP, JPY, etc.) because it's universally recognized
+No SCD Type 2 needed here because currency codes don't change - EUR is always EUR
+If we needed more details like currency names, symbols, or even exchange rates, we could add them later, but for now keeping it simple
+This dimension tells us what currency each trade's financial measures (P&L, Revenue, COGS) are denominated in
+PURPOSE: Currency reference data
+TYPE: Standard dimension (non-SCD)
+STANDARD: ISO 4217
+
+Key	Field	Type
+PK	CurrencyKey	INT
+CurrencyCode	CHAR(3)
+---
 
 ## 🔗 **RELATIONSHIPS**
 
@@ -351,7 +366,8 @@ TraderKey=2, Trader=John Smith, Department=Trading, JobPosition=Senior Trader, V
 
 ### **Measure Additivity:**
 - **Fully Additive:** Volume, COGS, Revenue, PnL (sum across all dimensions including time)
-- **Non-Additive:** MtM Price (weighted average or last value over time), PnlSplitPercentage (weighted average)
+- **Semi-Additive:** MtMPrice (additive across non-time dimensions, use AVG or last value for time)
+- **Non-Additive:** Price, PnlSplitPercentage (use weighted averages)
 
 ### **Date Handling:**
 - DateKey format: YYYYMMDD as integer (20241005)
