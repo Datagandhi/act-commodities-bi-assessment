@@ -1,0 +1,11 @@
+{
+  "sections_to_update": [
+    {
+      "section_name": "SQL Development",
+      "reason": "Query 8 added to completed_sql_queries.sql",
+      "updated_content": "## SQL Development (`project_documents/sql_assignment.sql`)\n\n### Environment Setup\n- **Target platform**: MS SQL Server (T-SQL syntax)\n- **Testing platform**: https://sqliteonline.com/ (MS SQL mode)\n\n## Core Data Model\nThe dataset represents **commodities trading operations** with three main entities:\n- **Trades**: Individual buy/sell transactions (T001-T010) linked to matched deals via `MatchId`\n- **Deals**: Matched trade pairs (M1-M5) with execution dates and assigned traders\n- **Traders**: Trader profiles with performance targets (AB=40, RA=20, CM=20)\n\n### Schema Notes\n- **Known typo**: `Deals.MatchedData` should be `MatchedDate` (column name inconsistency)\n- Dates stored as `date` type with `YYYYMMDD` format (20230401, not 20250401)\n- `TraderTarget` is `nvarchar(100)` but contains numeric values - requires casting in calculations\n\n### Required Queries (8 total)\n1. Total sold volume\n2. Weighted average buy price\n3. Profit per deal\n4. Traders who reached targets\n5. Second-highest profit trader\n6. Daily profit for April 1-10\n7. Cumulative profit for April 1-10\n8. Top 3 most profitable commodities\n\n### Key Business Logic\n- Trades are **paired by MatchId**: one Buy + one Sell = one Deal\n- Profit calculation: `(Sell_Price - Buy_Price) * Volume` per deal\n- Weighted average buy price: `SUM(Price * Volume) / SUM(Volume)` for buy-side trades only\n- Target achievement: Trader's cumulative profit ≥ TraderTarget\n\n### SQL Patterns to Follow\n- Use explicit column lists in SELECT (avoid `SELECT *`)\n- Join pattern: `Trades → Deals → Traders` via MatchId and TraderCode"
+    }
+  ],
+  "changelog_entry": "Added Query 8: Top 3 Most Profitable Commodities to completed_sql_queries.sql",
+  "timestamp": "2025-11-17T15:29:06"
+}

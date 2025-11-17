@@ -4,22 +4,22 @@
     {
       "ordinal": 0,
       "scrollPosition": {
-        "x": 535.20001220703125,
-        "y": 42.400001525878906
+        "x": 0,
+        "y": 0
       },
       "nodes": [
         {
           "location": {
             "x": 294,
-            "y": -5
+            "y": 0
           },
           "nodeIndex": "DimTrade",
           "nodeLineageTag": "a70052d9-063f-4c46-814c-004a4de2e997",
           "size": {
-            "height": 300,
+            "height": 368,
             "width": 234
           },
-          "zIndex": 1
+          "zIndex": 3
         },
         {
           "location": {
@@ -29,10 +29,10 @@
           "nodeIndex": "DimTrader",
           "nodeLineageTag": "1f56d243-51c7-4783-962e-2bb10e4ce927",
           "size": {
-            "height": 128,
+            "height": 193,
             "width": 234
           },
-          "zIndex": 6
+          "zIndex": 7
         },
         {
           "location": {
@@ -42,10 +42,10 @@
           "nodeIndex": "DimProduct",
           "nodeLineageTag": "23be21c4-66f5-4163-96fd-51bad9cf163f",
           "size": {
-            "height": 224,
+            "height": 274,
             "width": 234
           },
-          "zIndex": 7
+          "zIndex": 8
         },
         {
           "location": {
@@ -55,15 +55,15 @@
           "nodeIndex": "DimAccount",
           "nodeLineageTag": "a7eec2be-a6d2-45f5-82cc-31d275319c61",
           "size": {
-            "height": 176,
+            "height": 221,
             "width": 234
           },
-          "zIndex": 2
+          "zIndex": 4
         },
         {
           "location": {
-            "x": 278.39999389648438,
-            "y": 441
+            "x": 245.98533150998975,
+            "y": 555.15598492635058
           },
           "nodeIndex": "DimCurrency",
           "nodeLineageTag": "6dc69462-841b-4d4b-906a-bebfa07b6a6b",
@@ -71,7 +71,7 @@
             "height": 104,
             "width": 234
           },
-          "zIndex": 3
+          "zIndex": 9
         },
         {
           "location": {
@@ -81,10 +81,10 @@
           "nodeIndex": "DimDate",
           "nodeLineageTag": "cc86d627-01de-4db4-ad60-8212f4df5a46",
           "size": {
-            "height": 300,
+            "height": 440,
             "width": 234
           },
-          "zIndex": 4
+          "zIndex": 5
         },
         {
           "location": {
@@ -94,10 +94,10 @@
           "nodeIndex": "FactTrade",
           "nodeLineageTag": "3388f398-8f03-445f-9c9e-b20af40d7c87",
           "size": {
-            "height": 272,
+            "height": 431,
             "width": 234
           },
-          "zIndex": 5
+          "zIndex": 6
         },
         {
           "location": {
@@ -107,14 +107,26 @@
           "nodeIndex": "_Measures",
           "nodeLineageTag": "362f3181-9f3f-428a-a3d2-c02821b80215",
           "size": {
-            "height": 104,
+            "height": 215,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 1498.4000244140625,
+            "y": 260.5
+          },
+          "nodeIndex": "TradeType/ProductGroup Switch",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 2
         }
       ],
       "name": "All tables",
-      "zoomValue": 100,
+      "zoomValue": 70.95554390096882,
       "pinKeyFieldsToTop": true,
       "showExtraHeaderInfo": false,
       "hideKeyFieldsWhenCollapsed": false,

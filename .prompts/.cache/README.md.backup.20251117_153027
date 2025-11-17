@@ -8,50 +8,25 @@ This repository contains three core components for a Senior BI Engineer role ass
 - **Dimensional Modeling**: SCD Type 2 dimensions and periodic snapshot facts
 - **Power BI Visualization**: Performance overview dashboard
 
-
-## GenAI Documentation Automation
-
-This project includes an automated documentation system that keeps project documentation synchronized with code changes. Instead of manually updating README files every time you modify SQL queries or data models, the system detects changes and generates updates automatically.
-
-The workflow is simple: generate your initial documentation from templates, make code changes, and let the system detect what changed and update only the relevant sections. This saves time and ensures documentation never falls out of sync with your actual work.
-
-Technical details and usage instructions are in `.prompts/USER_GUIDE.md` for anyone interested in the implementation.
-
 ## File Organization
 ```
 .
 ├── README.md
-├── completed_sql_queries.sql
-├── dimensional_model/
-│   ├── model.md
-│   └── act_dimensional_model_erd.png
-├── power_bi/
-│   ├── Performance Overview.pbip
-│   └── performance_overview_documentation.md
-├── project_documents/
-│   ├── act_power_bi_theme.json
-│   ├── senior_bi_engineer_assessment_details.md
-│   ├── sql_assignment.sql
-│   └── trading_dataset.xlsx
-└── .prompts/
-    ├── USER_GUIDE.md
-    └── documentation_*.py
+└── project_documents/
+    ├── act_power_bi_theme.json
+    ├── senior_bi_engineer_assessment_details.md
+    ├── sql_assignment.sql
+    └── trading_dataset.xlsx
 ```
 
-- `README.md` - Project repository documentation
-- `completed_sql_queries.sql` - SQL solutions with detailed thought process (7 queries)
-- `dimensional_model/model.md` - Complete dimensional model specification
-- `dimensional_model/act_dimensional_model_erd.png` - Entity relationship diagram
-- `power_bi/Performance Overview.pbip` - Power BI project file (PBIP format)
-- `power_bi/performance_overview_documentation.md` - DAX measures and report documentation
+- `README.md` - Project Repository documentation
 - `project_documents/act_power_bi_theme.json` - Power BI theme (required for reporting assessment)
 - `project_documents/senior_bi_engineer_assessment_details.md` - Full requirements & assessment details
 - `project_documents/sql_assignment.sql` - SQL schema + assignment placeholders
 - `project_documents/trading_dataset.xlsx` - Trading dataset for dimensional modeling & Power BI
-- `.prompts/` - GenAI documentation automation system
 
 
-## SQL Development (`completed_sql_queries.sql`)
+## SQL Development (`project_documents/sql_assignment.sql`)
 
 ### Environment Setup
 - **Target platform**: MS SQL Server (T-SQL syntax)
@@ -87,7 +62,7 @@ The dataset represents **commodities trading operations** with three main entiti
 - Use explicit column lists in SELECT (avoid `SELECT *`)
 - Join pattern: `Trades → Deals → Traders` via MatchId and TraderCode
 
-## Dimensional Modeling Exercise (`dimensional_model/model.md`)
+## Dimensional Modeling Exercise
 
 ### Requirements
 - Design **SCD Type 2** dimensions
@@ -102,10 +77,6 @@ The dataset represents **commodities trading operations** with three main entiti
 - Expected dimensions: DimTrader (SCD2), DimProduct/Commodity (SCD2) and DimDate
 - Expected facts: FactTraderPerformance (periodic snapshots)
 
-### Deliverable
-- **Model Specification**: `dimensional_model/model.md` - Complete star schema with 6 dimensions, 1 fact table, composite business keys
-- **ERD Diagram**: `dimensional_model/act_dimensional_model_erd.png` - Visual representation of relationships
-
 ## Power BI Report (`Performance Overview`)
 
 ### Theme
@@ -114,15 +85,9 @@ The dataset represents **commodities trading operations** with three main entiti
 ### Data Source
 - Use "Trading Dataset.xlsx" (NOT the SQL assignment sample data)
 - May require data transformation in Power Query to align with dimensional model
-
-### Deliverable
-- **Report File**: `power_bi/Performance Overview.pbip` - Power BI project format
-- **Documentation**: `power_bi/performance_overview_documentation.md` - DAX measures, visuals, data model architecture
   
 
-## Deliverables Summary
-- **SQL**: `completed_sql_queries.sql` - 7 commented queries with thought process
-- **Modeling**: `dimensional_model/model.md` + ERD diagram with SCD2 dimensions and snapshot fact
-- **Power BI**: `power_bi/Performance Overview.pbip` with ACT theme applied
-
-
+## Deliverables
+- **SQL**: Commented queries added to `sql_assignment.sql` under each requirement
+- **Modeling**: Database diagram (image or .pdf) showing SCD2 dimensions and snapshot fact with PK, FK and relationships between tables captured.
+- **Power BI**: `.pbix` file named "Performance Overview" with given theme

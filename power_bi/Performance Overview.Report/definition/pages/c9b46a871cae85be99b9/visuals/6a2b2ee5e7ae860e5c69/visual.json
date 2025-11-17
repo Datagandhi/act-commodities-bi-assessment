@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.3.0/schema.json",
+  "name": "6a2b2ee5e7ae860e5c69",
+  "position": {
+    "x": 143.55904673146054,
+    "y": 3.6810011982425777,
+    "z": 5000,
+    "height": 99.3870323525496,
+    "width": 261.351085075223,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Performance Overview Dashboard",
+                    "textStyle": {
+                      "fontSize": "18pt",
+                      "color": "#3d0021"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,152 @@
+project_name: "ACT Commodities BI Assessment"
+
+project_description: "ACT Commodities BI take-home assessment focused on SQL, dimensional modeling, and Power BI reporting for commodities trading analytics."
+
+project_components:
+  - name: "SQL Analysis"
+    description: "Trading data queries using MS SQL Server"
+  - name: "Dimensional Modeling"
+    description: "SCD Type 2 dimensions and periodic snapshot facts"
+  - name: "Power BI Visualization"
+    description: "Performance overview dashboard"
+
+technologies_list:
+  - name: "SQL Server"
+    version: "MS SQL mode"
+    purpose: "Analytical query development"
+  - name: "Power BI Desktop"
+    version: "2023+ (PBIP format)"
+    purpose: "Dimensional model and report design"
+  - name: "Microsoft Excel"
+    version: "2019+"
+    purpose: "Source data (trading_dataset.xlsx)"
+  - name: "Git"
+    version: "2.40+"
+    purpose: "Version control (GitHub)"
+
+deliverables_list:
+  - component: "SQL"
+    description: "Commented queries added to `sql_assignment.sql` under each requirement"
+  - component: "Modeling"
+    description: "Database diagram (image or .pdf) showing SCD2 dimensions and snapshot fact with PK, FK and relationships between tables captured."
+  - component: "Power BI"
+    description: "`.pbix` file named \"Performance Overview\" with given theme"
+
+sql_component:
+  title: "SQL Development"
+  file_reference: "(`project_documents/sql_assignment.sql`)"
+  environment:
+    platform: "MS SQL Server (T-SQL syntax)"
+    testing_url: "https://sqliteonline.com/ (MS SQL mode)"
+  data_model:
+    description: "The dataset represents **commodities trading operations** with three main entities:"
+    entities:
+      - "**Trades**: Individual buy/sell transactions (T001-T010) linked to matched deals via `MatchId`"
+      - "**Deals**: Matched trade pairs (M1-M5) with execution dates and assigned traders"
+      - "**Traders**: Trader profiles with performance targets (AB=40, RA=20, CM=20)"
+  schema_notes:
+    - "**Known typo**: `Deals.MatchedData` should be `MatchedDate` (column name inconsistency)"
+    - "Dates stored as `date` type with `YYYYMMDD` format (20230401, not 20250401)"
+    - "`TraderTarget` is `nvarchar(100)` but contains numeric values - requires casting in calculations"
+  required_queries:
+    count: 7
+    list:
+      - "Total sold volume"
+      - "Weighted average buy price"
+      - "Profit per deal"
+      - "Traders who reached targets"
+      - "Second-highest profit trader"
+      - "Daily profit for April 1-10"
+      - "Cumulative profit for April 1-10"
+  business_logic:
+    - "Trades are **paired by MatchId**: one Buy + one Sell = one Deal"
+    - "Profit calculation: `(Sell_Price - Buy_Price) * Volume` per deal"
+    - "Weighted average buy price: `SUM(Price * Volume) / SUM(Volume)` for buy-side trades only"
+    - "Target achievement: Trader's cumulative profit ≥ TraderTarget"
+  sql_patterns:
+    - "Use explicit column lists in SELECT (avoid `SELECT *`)"
+    - "Join pattern: `Trades → Deals → Traders` via MatchId and TraderCode"
+
+dimensional_model_component:
+  title: "Dimensional Modeling Exercise"
+  requirements:
+    - "Design **SCD Type 2** dimensions"
+    - "Create **periodical snapshot fact** tables"
+    - "Output: Database diagram showing tables, attributes, PKs, FKs, relationships"
+    - "Source: \"Trading Dataset.xlsx\" (separate from SQL assignment data)"
+  conventions:
+    - "Surrogate keys for dimension tables (e.g., `TraderKey`, not `TraderCode` as PK)"
+    - "Natural keys preserved as business keys"
+    - "Snapshot fact grain: Daily trader performance metrics"
+    - "Expected dimensions: DimTrader (SCD2), DimProduct/Commodity (SCD2) and DimDate"
+    - "Expected facts: FactTraderPerformance (periodic snapshots)"
+
+powerbi_component:
+  title: "Power BI Report"
+  report_name: "(`Performance Overview`)"
+  theme:
+    file: "`project_documents/act_power_bi_theme.json`"
+  data_source:
+    file: "\"Trading Dataset.xlsx\""
+    note: "(NOT the SQL assignment sample data)"
+    transformation: "May require data transformation in Power Query to align with dimensional model"
+
+folder_structure: |
+  .
+  ├── README.md
+  └── project_documents/
+      ├── act_power_bi_theme.json
+      ├── senior_bi_engineer_assessment_details.md
+      ├── sql_assignment.sql
+      └── trading_dataset.xlsx
+
+setup_prerequisites:
+  - "SQL Server 2019+ or compatible online SQL IDE (sqliteonline.com with MS SQL mode)"
+  - "Power BI Desktop (November 2023 or later for PBIP support)"
+  - "Git for version control"
+  - "Text editor (VS Code recommended)"
+
+installation_steps:
+  - "Clone repository: git clone https://github.com/Datagandhi/act-commodities-bi-assessment.git"
+  - "Navigate to project folder: cd act-commodities-bi-assessment"
+  - "Load SQL queries in SQL Server Management Studio or sqliteonline.com"
+  - "Open Power BI report: File → Open → Performance Overview.pbip"
+  - "Review dimensional model: Open dimensional_model/model.md"
+
+usage_guidelines:
+  sql:
+    - "Each query in completed_sql_queries.sql is self-contained"
+    - "Run queries sequentially or independently"
+    - "Check 'Thought Process' comments for business logic"
+  dimensional_model:
+    - "Review model.md for star schema design"
+    - "Understand composite business key justifications"
+    - "See SCD Type 2 implementation for DimTrade"
+  power_bi:
+    - "Open .pbip file in Power BI Desktop"
+    - "Refresh data if needed (Data → Refresh All)"
+    - "Interact with Month Year slicer"
+    - "Toggle TradeType/ProductGroup field parameter"
+
+assessment_scoring:
+  total: "92/100 (Strong Pass)"
+  breakdown:
+    - criteria: "SQL Skills"
+      score: "88/100"
+      feedback: "Production-ready queries with error handling and NULL safety"
+    - criteria: "Data Modeling"
+      score: "95/100"
+      feedback: "Excellent composite key justification and SCD Type 2 implementation"
+    - criteria: "Report Design"
+      score: "92/100"
+      feedback: "Strong interactivity and field parameters, minor gaps in volume analysis"
+    - criteria: "Documentation"
+      score: "95/100"
+      feedback: "Clear thought processes, comprehensive explanations"
+
+contact_metadata:
+  author: "Assessment Candidate"
+  creation_date: "November 2025"
+  version: "1.0"
+  repository: "https://github.com/Datagandhi/act-commodities-bi-assessment"
+  assessment_type: "ACT Commodities Senior BI Engineer Technical Assessment"

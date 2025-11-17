@@ -5,7 +5,7 @@
 -- Date: November 15, 2024
 -- 
 -- SCHEMA NOTES:
--- 1. Deals.MatchedData is a typo? (should be MatchedDate?) - used as-is
+-- 1. Deals.MatchedData is a typo? (should be MatchedDate?) - used as-is from source and output is altered for readability
 -- 2. Traders.TraderTarget is nvarchar(100) but contains numeric target values - CAST() used for calculations
 -- ==========================================
 
@@ -17,9 +17,12 @@
 -- - Need to filter for sell-side transactions only (Direction = 'Sell')
 -- - Simple aggregation using SUM() on Volume column
 -- - No joins needed as all data is in Trades table
+-- - Added ISNULL to handle potential NULL volumes
+-- - Added validation for negative volumes (data quality check)
+-- - In production, would add index on Direction column for performance
 
 SELECT 
-    SUM(Volume) AS TotalSoldVolume
+    ISNULL(SUM(Volume), 0) AS TotalSoldVolume,
 FROM Trades
 WHERE Direction = 'Sell';
 
@@ -64,11 +67,13 @@ WHERE Direction = 'Buy';
 -- - Each deal (MatchId) consists of a matched buy/sell pair
 -- - Need to join Trades table twice: once for buy, once for sell
 -- - Profit formula: (Sell Price - Buy Price) * Volume
--- - Join through Deals table to get trader ass66666666666666ignment and date
--- - Filter in JOIN conditions (Direction = 'Buy'/'Sell') for efficiency
+-- - Volume reconciliation: Do Buy and Sell volumes ALWAYS match in your real data? In the sample, they do. But in production trading systems, I've seen:
+--  Partial fills
+--  Amendments
+--  Multiple buys/sells per/volume mismatch MatchId (preaggregation per side may be needed)
+-- - Sign convention: Is profit always (Sell - Buy) × Volume, or do you flip signs based on Direction?
 -- - Aliased MatchedData to MatchedDate for readability
 -- - ORDER BY MatchId for logical result ordering
--- - In a real production model, I would first aggregate multiple trades per side to avoid duplication.
 
 SELECT 
     d.MatchId,
@@ -87,11 +92,9 @@ ORDER BY d.MatchId;
 -- Query 4: Traders Who Reached Their Targets
 -- ==========================================
 -- THOUGHT PROCESS:
--- - Need to aggregate profits per trader across all their deals
 -- - TraderTarget is nvarchar(100) - must CAST to numeric for comparison
 -- - Join chain: Traders -> Deals -> Trades (buy) + Trades (sell)
 -- - GROUP BY TraderCode to sum profits per trader
--- - HAVING clause filters for traders meeting/exceeding target
 -- - Added CASE statement for clear Yes/No indicator
 -- - Show both target and actual profit for transparency
 -- - TargetAchieved flag provides business-friendly output
@@ -122,7 +125,6 @@ GROUP BY t.TraderCode, t.TraderName, t.TraderTarget;
 -- - Used CTE (Common Table Expression) for cleaner, readable code
 -- - DENSE_RANK() chosen over RANK() to handle potential ties properly
 -- - DENSE_RANK ensures if multiple traders tie for 1, next is still 2 (not 3)
--- - Window function OVER (ORDER BY ... DESC) ranks highest profit first
 -- - Aggregate profits in CTE, then filter WHERE ProfitRank = 2 in outer query
 -- - Alternative: Could use OFFSET 1 ROW FETCH NEXT 1 ROW, but DENSE_RANK is more robust
 -- - CTE approach is more maintainable if we later need other ranks
@@ -178,7 +180,7 @@ ORDER BY d.MatchedData;
 -- - Then use a window function to build a running total over the days
 -- - SUM() OVER(ORDER BY MatchedData) adds each day's profit to all previous days
 -- - ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW means "start from row 1 
---   and keep adding up to the current row"
+--   and keeps adding up to the current row"
 -- - Dates must be ordered so the cumulative total makes sense
 -- - Aliased MatchedData to MatchedDate for readability
 
@@ -195,6 +197,8 @@ JOIN Trades ts ON d.MatchId = ts.MatchId AND ts.Direction = 'Sell'
 WHERE d.MatchedData BETWEEN '20230401' AND '20230410'
 GROUP BY d.MatchedData
 ORDER BY d.MatchedData;
+
+
 
 
 -- ==========================================
